@@ -1,26 +1,34 @@
 pipeline {
     agent any
     environment {
-        NODE_ENV = 'production'
+        IMAGE_NAME = "lenardth/nodejs-app"
     }
     stages {
-        // Remove the Clone Repository stage since Jenkins
-        // automatically checks out code when using Jenkinsfile from SCM
-        stage('Install Dependencies') {
+        stage('Clone Repository') {
             steps {
-                sh 'npm ci'
+                git branch: 'main', url: 'https://github.com/Lenardth/jenkinsPractice-.git'
             }
         }
-        stage('Run Tests') {
+        stage('Build Docker Image') {
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    sh 'npm test'
+                sh "docker build -t ${IMAGE_NAME} ."
+            }
+        }
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
+                        sh "docker tag ${IMAGE_NAME} lenardth/nodejs-app"
+                        sh "docker push lenardth/nodejs-app"
+                    }
                 }
             }
         }
-        stage('Deploy to Server') {
+        stage('Deploy and Run Container') {
             steps {
-                sh 'pm2 restart server.js || pm2 start server.js'
+                sh "docker stop nodejs-container || true"
+                sh "docker rm nodejs-container || true"
+                sh "docker run -d -p 3000:3000 --name nodejs-container ${IMAGE_NAME}"
             }
         }
     }
