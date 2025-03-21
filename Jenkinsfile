@@ -6,8 +6,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git 
-'https://github.com/Lenardth/jenkinsPractice-.git'
+                git 'https://github.com/Lenardth/jenkinsPractice-.git'
             }
         }
         stage('Install Dependencies') {
@@ -17,16 +16,17 @@ pipeline {
         }
         stage('Run Tests') {
             steps {
-                sh 'npm test || echo "Tests Failed 
-but continuing..."'
+                sh '''    # Changed to triple single quotes
+                npm test || echo "Tests Failed but continuing..."
+                '''
             }
         }
         stage('Deploy to Server') {
             steps {
-                sh 'pm2 restart server.js || pm2 
-start server.js'
+                sh '''
+                pm2 restart server.js || pm2 start server.js
+                '''
             }
         }
     }
 }
-
